@@ -1,14 +1,63 @@
-# Lightweight Exposure Alignment for VLM-Guided End-to-End Autonomous Driving
+# Empirical Error-Aware Conditioning for Senna-Style VLM-Guided Planning
 
-## Team Members
+Team: Parth Panchal and Shloak Aggarwal. Track: VLM-Guided Autonomous Driving.
 
-- Parth Panchal (018333965)
-- Shloak Aggarwal (018189938)
+Can a planner trained with the real error distribution of Senna-VLM remain more
+robust to upstream decision errors than a planner trained with ground-truth
+meta-actions only or uniformly corrupted actions?
 
-## Abstract
+Reproduce the released **Senna-VLM** inference pipeline, cache predictions on
+nuScenes, measure speed/path errors, then add a lightweight discrete meta-action
+adapter to a released official **VAD** planner (Base or Tiny). The complete
+Senna-E2E implementation is unavailable under the supplied project evidence;
+this is a **Senna-style VAD reconstruction**, not exact Senna-E2E reproduction.
+Senna-2 is the principal SOTA comparison, not a reproduction target.
 
-Recent autonomous-driving systems such as Senna use a Vision-Language Model (VLM) to predict high-level driving decisions and an end-to-end planner to generate vehicle trajectories. A train-inference mismatch can arise when the planner is trained using ground-truth decisions but receives imperfect VLM predictions during deployment. This project investigates whether lightweight exposure to VLM-predicted decisions during supervised planner training can improve decision-planning consistency and robustness without reinforcement learning or large-scale closed-loop alignment. Using the original Senna architecture as a baseline, we will keep the VLM fixed, cache its predictions, and compare ground-truth, predicted, mixed, scheduled, and confidence-aware planner conditioning strategies. Experiments will use the public Senna codebase and nuScenes-based evaluation, measuring trajectory displacement error, collision-related metrics, decision-planning consistency, and robustness to injected upstream decision errors. The study will assess whether reducing the distribution mismatch at the VLM-to-planner interface provides an effective, computationally feasible alternative to more complex alignment methods.
+```mermaid
+flowchart LR
+  N[Shared nuScenes, read only] --> S[Frozen released Senna-VLM]
+  S --> C[Versioned predictions and raw text]
+  C --> E[Development split error audit]
+  E --> T[Matched corruption training conditions]
+  N --> V[Released VAD baseline]
+  T --> A[Small meta-action adapter]
+  V --> A
+  A --> R[Open-loop trajectory and command-influence evaluation]
+```
 
-## Selected Track
+| Condition | Planner conditioning during training |
+|---|---|
+| C0 | Released VAD, no action adapter |
+| C1 | Ground-truth speed/path actions |
+| C2 | Uniform corruption matched to measured actual-change rate |
+| C3 | Empirical confusion-aware corruption fitted on development data |
 
-VLM-Guided Autonomous Driving
+Match C1–C3 data, initialization, trainable parameters, steps, sample order and
+augmentation. Start with one seed; three seeds follow only after a measured
+pilot. Cached-prediction training and calibrated confidence gating are optional.
+Evaluate oracle and real predicted actions, severity-scaled empirical errors,
+uniform errors, action/error subsets, and counterfactual command influence.
+Report repository-standard planning metrics, valid ADE/FDE, open-loop collision
+proxies, runtime, peak memory and GPU-hours. These do not establish real-world
+safety. A planner ignoring the action is a failure requiring investigation.
+
+**Status:** Local infrastructure checks complete; HPC smoke evidence pending. No model downloads,
+GPU experiments, baseline results or planner implementation. Model environments
+and upstream pins are deferred until the HPC smoke test passes.
+
+Start with [REPRODUCIBILITY.md](REPRODUCIBILITY.md). See [DATASET.md](DATASET.md),
+[HPC inventory](docs/hpc_inventory.md), [experiment log](docs/experiment_log.md),
+and [readiness requirements](docs/readiness.md). Literature context is preserved in the
+[survey](literature_sota_survey.md) and [novelty audit](novelty_feasibility_audit.md).
+
+Local checks need only Python's standard library and Bash:
+
+```bash
+python3 -m unittest discover -s tests -v
+bash -n scripts/hpc/inventory.sh scripts/hpc/submit_smoke.sh scripts/hpc/smoke.sbatch
+```
+
+Private configuration lives in ignored `.env`; YAML examples document the same
+variables and are not loaded at runtime. Never commit data, weights, personal
+paths, credentials, caches or scheduler logs. Legacy commits contain student IDs;
+this change removes them from the current README without rewriting history.

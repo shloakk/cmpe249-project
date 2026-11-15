@@ -1,5 +1,18 @@
 # Literature and State-of-the-Art Survey
 
+> Scope update (2026-11-15): The current project is **Empirical Error-Aware
+> Conditioning for Senna-Style VLM-Guided Planning**. Reproduce released
+> Senna-VLM, then reconstruct an action adapter on released VAD Base/Tiny;
+> complete Senna-E2E is unavailable. Senna-2 is the principal SOTA comparison.
+> Required conditions are C0 released VAD, C1 ground-truth actions, C2 uniform
+> corruption matched to measured actual-change rate, and C3 development-split
+> empirical confusion-aware corruption. Start with one seed and a measured
+> pilot; predicted-only and confidence gating are optional. This supersedes
+> earlier mixed/scheduled training and mandatory three-seed recommendations.
+> The contribution is empirical error-aware supervised conditioning, not generic
+> scheduled sampling. Earlier cited claims below are preserved historical survey
+> content and were not independently reverified during infrastructure setup. No runs exist yet.
+
 ## Lightweight Exposure Alignment for VLM-Guided End-to-End Autonomous Driving
 
 **Survey date:** September 8, 2026  
