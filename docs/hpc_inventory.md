@@ -16,7 +16,8 @@ executed or independently verified. Public paths deliberately use placeholders.
 | CAN-bus | Not found in initial inspection; direct checks pending |
 | Artifact directories | checkpoints, caches, outputs, logs, environments, tmp |
 
-Repository: `/fs/atipa/home/<user>/cmpe249-project`.
+Repository (updated location):
+`/fs/atipa/data/<course>/students/<user>/cmpe249-project`.
 Shared data: `/fs/atipa/data/<course>/datasets/nuscenes/v1.0-trainval`.
 Derived: `/fs/atipa/data/<course>/derived/nuscenes/legacy_2024`.
 Artifacts: `/fs/atipa/data/<course>/students/<user>/cmpe249-senna`.
@@ -30,3 +31,21 @@ output may show four GPUs; only the SLURM-assigned GPU is authorized.
 Storage capacity, current modules, model imports and GPU runtime remain pending
 returned HPC evidence. The smoke job uses 1 GPU, 2 CPUs, 8 GB RAM and at most 10 minutes
 (upper bound 1/6 allocated GPU-hour); actual consumption must be recorded.
+
+## Returned smoke evidence — 2026-11-15
+
+Job 116264 on cs001.hpc.coe completed in 2 seconds with exit 0:0 at commit
+49cba504dc0dffab58e152a96acd45e2bebe8af6, clean working tree. Both success
+markers were present and no stderr was pasted. SLURM assigned GPU `1`; do not
+replace it with `0`. `nvidia-smi` showed four A100-PCIE-40GB devices and driver
+590.44.01; device 0 was occupied by another process. No process on that GPU
+belongs to this test. The driver display of CUDA 13.1 is not an installed
+PyTorch runtime version.
+
+The selected `python3` is 3.9.25 with none of torch, torchvision, mmcv,
+mmcv-full, mmdet or mmdet3d installed. This differs from the separately reported
+course reference environment. Conda, Apptainer and Singularity commands exist.
+The filesystem reports 5.0 TB free, 96% used; this is shared filesystem capacity,
+not evidence of the student's quota. All three annotation candidates are
+readable; schema compatibility remains unknown. All three direct CAN-bus
+candidates are missing. No full dataset validation has been performed.

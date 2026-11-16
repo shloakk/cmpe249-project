@@ -64,3 +64,6 @@ passing local checks does not pass the HPC gate.
 
 Environment pinning begins only after this evidence passes review; see
 [readiness requirements](docs/readiness.md) for environment pinning policy.
+
+The infrastructure smoke has now passed (job 116264). Use
+[environment setup](docs/environments.md) for the next submission and its logs.

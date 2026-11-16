@@ -1,8 +1,8 @@
 # Readiness requirements and upstream policy
 
-Environment pinning requires a successful HPC smoke test. Environment files
-will be added after official requirements are inspected; incomplete templates
-must not be mistaken for dependency locks.
+The HPC smoke test passed: job 116264, COMPLETED, exit 0:0.
+Model environment imports remain pending. Environment pinning requires this evidence. Official sources have now been inspected; see [environment setup](environments.md).
+Candidate recipes must not be mistaken for tested or fully resolved locks.
 
 0. Local unit tests, shell syntax, current-tree privacy/artifact checks; then
    returned SLURM COMPLETED/exit 0 logs with ENVIRONMENT_SMOKE_OK. Until returned,

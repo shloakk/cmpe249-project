@@ -41,9 +41,11 @@ Report repository-standard planning metrics, valid ADE/FDE, open-loop collision
 proxies, runtime, peak memory and GPU-hours. These do not establish real-world
 safety. A planner ignoring the action is a failure requiring investigation.
 
-**Status:** Local infrastructure checks complete; HPC smoke evidence pending. No model downloads,
-GPU experiments, baseline results or planner implementation. Model environments
-and upstream pins are deferred until the HPC smoke test passes.
+**Status:** HPC infrastructure smoke passed (job 116264, exit 0:0). Official
+source revisions and candidate environment recipes are pinned. Model environment
+installation/import checks are pending; no model weights, prediction caches,
+baseline evaluation or planner implementation exist yet. See
+[environment setup](docs/environments.md) for the next measured run.
 
 Start with [REPRODUCIBILITY.md](REPRODUCIBILITY.md). See [DATASET.md](DATASET.md),
 [HPC inventory](docs/hpc_inventory.md), [experiment log](docs/experiment_log.md),
@@ -54,7 +56,7 @@ Local checks need only Python's standard library and Bash:
 
 ```bash
 python3 -m unittest discover -s tests -v
-bash -n scripts/hpc/inventory.sh scripts/hpc/submit_smoke.sh scripts/hpc/smoke.sbatch
+bash -n scripts/hpc/*.sh scripts/hpc/*.sbatch scripts/environments/*.sh
 ```
 
 Private configuration lives in ignored `.env`; YAML examples document the same

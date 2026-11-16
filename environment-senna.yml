@@ -1,0 +1,8 @@
+# Bootstrap only; install the hashed official requirements via setup_senna.sh.
+# Python minor comes from the pinned Senna README. No model weights are installed.
+name: senna
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
