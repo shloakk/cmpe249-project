@@ -22,22 +22,28 @@ def verify(directory, entry):
             raise ValueError(f'{directory / name}: provenance hash mismatch')
 
 
+def prepare(root, name, entry, verify_only=False):
+    target = root / name
+    if not target.exists():
+        if verify_only:
+            raise ValueError(f'{target}: source is not staged; fetch it on a network-enabled host first')
+        root.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['git', 'clone', '--no-checkout', entry['url'], str(target)], check=True)
+        subprocess.run(['git', '-C', str(target), 'checkout', '--detach', entry['commit']], check=True)
+    verify(target, entry)
+    return target
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True)
+    parser.add_argument('--verify-only', action='store_true', help='Never clone or fetch missing sources')
     parser.add_argument('names', nargs='+', choices=('senna', 'vad', 'mmdetection3d'))
     args = parser.parse_args()
     entries = json.loads(LOCK.read_text())
-    args.root.mkdir(parents=True, exist_ok=True)
     for name in args.names:
         entry = entries[name]
-        target = args.root / name
-        if not target.exists():
-            subprocess.run(['git', 'clone', '--filter=blob:none', '--no-checkout',
-                            entry['url'], str(target)], check=True)
-            subprocess.run(['git', '-C', str(target), 'checkout', '--detach',
-                            entry['commit']], check=True)
-        verify(target, entry)
+        prepare(args.root, name, entry, args.verify_only)
         print(f"VERIFIED {name} {entry['commit']}", flush=True)
 
 

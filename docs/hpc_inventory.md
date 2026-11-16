@@ -49,3 +49,9 @@ The filesystem reports 5.0 TB free, 96% used; this is shared filesystem capacity
 not evidence of the student's quota. All three annotation candidates are
 readable; schema compatibility remains unknown. All three direct CAN-bus
 candidates are missing. No full dataset validation has been performed.
+
+## Compute-node connectivity observation
+
+Job 116267 on cs001.hpc.coe timed out accessing GitHub over HTTPS during source
+cloning. This is evidence of that failed connection, not proof of a cluster-wide
+ban on every package server. Conda/PyPI/PyTorch connectivity remains unverified.

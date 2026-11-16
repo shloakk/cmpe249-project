@@ -12,11 +12,12 @@ export TMPDIR="$CMPE249_ARTIFACT_ROOT/tmp"
 upstream="$CMPE249_ARTIFACT_ROOT/upstream"
 prefix="$CMPE249_ARTIFACT_ROOT/environments/senna"
 command -v conda
-"$python_bin" -m src.upstream --root "$upstream" senna
+"$python_bin" -m src.upstream --root "$upstream" --verify-only senna
 if [[ -e "$prefix" ]]; then
   echo "Environment already exists: $prefix. Inspect prior logs; do not overwrite it." >&2
   exit 1
 fi
+"$python_bin" -m src.network_check
 set -x
 conda env create --prefix "$prefix" --file environment-senna.yml
 conda run --no-capture-output --prefix "$prefix" python -m pip install \

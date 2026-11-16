@@ -43,9 +43,10 @@ safety. A planner ignoring the action is a failure requiring investigation.
 
 **Status:** HPC infrastructure smoke passed (job 116264, exit 0:0). Official
 source revisions and candidate environment recipes are pinned. Model environment
-installation/import checks are pending; no model weights, prediction caches,
+installation/import checks are blocked by compute-node network connectivity
+(job 116267 failed before installation); no model weights, prediction caches,
 baseline evaluation or planner implementation exist yet. See
-[environment setup](docs/environments.md) for the next measured run.
+[environment setup](docs/environments.md) for the next connectivity diagnostic.
 
 Start with [REPRODUCIBILITY.md](REPRODUCIBILITY.md). See [DATASET.md](DATASET.md),
 [HPC inventory](docs/hpc_inventory.md), [experiment log](docs/experiment_log.md),

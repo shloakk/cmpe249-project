@@ -29,7 +29,7 @@ export PYTHONDONTWRITEBYTECODE=1
 image="$CMPE249_ARTIFACT_ROOT/environments/vad.sif"
 [[ ! -e "$image" ]] || { echo 'VAD image exists; inspect previous logs before rebuilding' >&2; exit 1; }
 set -x
-"${CMPE249_PYTHON:-python3}" -m src.upstream --root "$CMPE249_ARTIFACT_ROOT/upstream" vad
+"${CMPE249_PYTHON:-python3}" -m src.upstream --root "$CMPE249_ARTIFACT_ROOT/upstream" --verify-only vad
 apptainer --version
 apptainer build --fakeroot "$image" containers/vad.def
 sha256sum "$image"

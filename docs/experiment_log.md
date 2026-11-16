@@ -56,6 +56,26 @@
 - Runtime, job IDs, GPU memory and metrics: not available for these recipes.
 - Next action: one Senna setup attempt. Both model environment gates PENDING.
 
+## 2026-11-15 — Senna environment setup, failed before installation
+
+- Commit: 38b2a326d0124e83cc89b9f86dc22c3131df2406; clean working tree.
+- Command: submitted `scripts/hpc/setup_senna.sbatch`; job 116267 on cs001.hpc.coe.
+- Scheduler: FAILED, exit 1:0; elapsed 00:02:12; batch MaxRSS 41.50M.
+- GPU assignment: 0; approximate allocated GPU-hours 132/3600 = 0.03667.
+- Logs: `logs/senna-environment-116267.out` and `.err` in the artifact root;
+  complete stdout/stderr and accounting returned in chat.
+- Failure: `git clone` timed out connecting to github.com:443 in the compute
+  allocation. Package installation, Conda environment creation and model imports
+  were not reached. No model metrics or peak CUDA memory measured.
+- Resolution prepared locally: source staging separated from compute-node setup;
+  verification-only mode; parallel HEAD-only package-server connectivity checks.
+- Local validation: 17 unit tests passed; shell/Python syntax, naming/privacy and
+  whitespace checks passed. No real HPC network probe was run locally.
+- Gate: infrastructure remains passed; model environments BLOCKED by unresolved
+  installation connectivity. Do not build VAD or retry Senna installation yet.
+- Next action: return login/compute network diagnostics; choose installation or
+  offline transfer based on evidence. Preserve any partial clone/environment.
+
 ## Template for each subsequent attempt (including failures)
 
 - Date / commit / dirty status:
