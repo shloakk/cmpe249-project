@@ -12,6 +12,10 @@ export TMPDIR="$CMPE249_ARTIFACT_ROOT/tmp"
 upstream="$CMPE249_ARTIFACT_ROOT/upstream"
 prefix="$CMPE249_ARTIFACT_ROOT/environments/senna"
 command -v conda
+conda --version
+if ! conda tos --version; then
+  printf 'Terms plugin version unavailable through its CLI\n'
+fi
 "$python_bin" -m src.upstream --root "$upstream" --verify-only senna
 if [[ -e "$prefix" ]]; then
   echo "Environment already exists: $prefix. Inspect prior logs; do not overwrite it." >&2
@@ -19,7 +23,11 @@ if [[ -e "$prefix" ]]; then
 fi
 "$python_bin" -m src.network_check
 set -x
-conda env create --prefix "$prefix" --file environment-senna.yml
+# Explicit CLI channels are visible to Conda's pre-command hooks.
+# Keep the Python minor aligned with environment-senna.yml.
+conda create --yes --prefix "$prefix" --override-channels \
+  --channel https://conda.anaconda.org/conda-forge --no-default-packages \
+  python=3.10 pip
 conda run --no-capture-output --prefix "$prefix" python -m pip install \
   --extra-index-url https://download.pytorch.org/whl/cu118 \
   torch==2.0.1+cu118 torchvision==0.15.2+cu118 torchaudio==2.0.2+cu118

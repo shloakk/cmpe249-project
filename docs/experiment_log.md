@@ -118,6 +118,31 @@
 - Next action: retry Senna setup through the proxy; preserve any existing prefix
   and return its guard error if present, rather than removing files blindly.
 
+## 2026-11-15 — YAML channel exclusion insufficient for cluster pre-check
+
+- Commit: 0b8b55206888ecdd378e8843ce1cca1d55f17c98; clean working tree.
+- Command: `scripts/hpc/setup_senna.sbatch`; job 116270 on cs001.hpc.coe.
+- Scheduler: FAILED, exit 1:0; elapsed 3 seconds; batch MaxRSS 3580K.
+- One assigned GPU (0); estimated allocated GPU-hours 3/3600 = 0.00083.
+- Logs: `logs/senna-environment-116270.out` and `.err` under the artifact root;
+  complete logs and accounting returned in chat.
+- Results: pinned source verified; all five current package endpoint checks,
+  including both conda-forge indexes, passed through the proxy.
+- Failure: same defaults main/r CondaToSNonInteractiveError at `conda env create`,
+  despite YAML conda-forge/nodefaults. No pip install or model imports occurred.
+- Diagnosis: the YAML-only channel selection did not constrain this cluster's
+  pre-command terms check. Official plugin source reads command context channels;
+  exact installed Conda/plugin versions have not yet been returned.
+- Resolution prepared locally: explicit `conda create --override-channels` with
+  the full conda-forge URL, Python 3.10 and pip; exclude site default packages;
+  log Conda and terms-plugin versions. Do not accept terms or disable plugins.
+- Local checks: 17 tests passed, shell/Python syntax and whitespace checks passed;
+  privacy/naming/size audit passed. No Conda executable is available locally, so
+  actual Conda/plugin behavior and dependency solving remain unverified here.
+- Gate: proxy/conda-forge endpoint access PASSED; model environment gate PENDING.
+- Next action: one retry using explicit CLI channel selection; return complete
+  stdout/stderr and SLURM accounting. Do not remove an existing environment prefix.
+
 ## Template for each subsequent attempt (including failures)
 
 - Date / commit / dirty status:

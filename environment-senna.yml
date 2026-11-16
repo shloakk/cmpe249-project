@@ -1,4 +1,5 @@
-# Bootstrap only; install the hashed official requirements via setup_senna.sh.
+# Bootstrap reference; setup_senna.sh uses matching explicit conda create arguments.
+# Install the hashed official requirements via that script.
 # Python minor comes from the pinned Senna README. No model weights are installed.
 name: senna
 channels:

@@ -64,3 +64,9 @@ Job 116269 then verified the pinned Senna source and PACKAGE_NETWORK_OK through
 the user-supplied proxy. Conda stopped on the defaults main/r channel terms prompt
 before pip installation. The candidate bootstrap now uses conda-forge/nodefaults;
 that new channel route is not yet verified on HPC. No terms were auto-accepted.
+
+Job 116270 verified both conda-forge indexes through the proxy, then failed with
+the same configured-defaults terms prompt. YAML nodefaults was insufficient for
+the installed pre-command check. Candidate setup now selects the channel with
+explicit command-line override; installed Conda/plugin versions and the result
+of that command remain pending.

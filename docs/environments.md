@@ -4,11 +4,13 @@ The infrastructure smoke passed. Senna setup job 116267 failed on GitHub
 connectivity before installation. Diagnostic job 116268 then confirmed that all
 seven tested Conda/PyPI/PyTorch endpoints were unreachable from cs001.hpc.coe.
 The supplied proxy then passed all seven package checks in job 116269.
-That job stopped at the Anaconda defaults-channel terms prompt. Model imports
+That job stopped at the Anaconda defaults-channel terms prompt. Job 116270
+reached conda-forge through the proxy but hit the same prompt despite nodefaults.
+Model imports
 remain untested. No model checkpoints have been downloaded.
 
 See [network access configuration](network_access.md) for the current next
-step. The Python bootstrap now uses conda-forge with nodefaults. The setup preflight
+step. The Python bootstrap now uses explicit command-line channel exclusion. The setup preflight
 will check those new channel endpoints through the configured proxy before
 installation; any unreachable endpoint stops setup. Never install into the
 shared course environment.
@@ -64,15 +66,32 @@ If the failed clone left an incomplete directory, preserve it and return the
 error before changing it. Compute-node setup uses `--verify-only`, so missing
 sources produce an immediate error without attempting GitHub access.
 
-## Senna setup — retry with explicit bootstrap channels
+## Senna setup — retry with explicit command-line channel selection
 
-The bootstrap uses `conda-forge` plus `nodefaults`, following the defaults-channel
-terms failure in job 116269. This is an environment-specific channel change,
-not an upstream Python-version or Senna-package change. No terms were accepted
-on the user's behalf and no shared/global Conda configuration was changed.
-The original defaults channel was a local bootstrap choice, not a requirement
-specified by Senna. Conda's [environment-file documentation](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html#creating-an-environment-file-manually)
-explains that nodefaults excludes default channels for that environment.
+Job 116270 showed that `nodefaults` inside the YAML did not prevent this
+installation's terms pre-check from inspecting configured defaults channels.
+Setup therefore invokes the older, explicit package-specification command:
+
+```bash
+conda create --yes --prefix "$prefix" --override-channels \
+  --channel https://conda.anaconda.org/conda-forge --no-default-packages \
+  python=3.10 pip
+```
+
+The Python minor and pip bootstrap match `environment-senna.yml`. Conda's
+[create command documentation](https://docs.conda.io/projects/conda/en/stable/commands/create.html#channel-customization)
+states that override-channels excludes default and configured channels. Unlike
+an environment-file-only selection, the flags are present when Conda initializes
+the command context. The [terms plugin source](https://github.com/anaconda/conda-anaconda-tos/blob/main/conda_anaconda_tos/plugin.py)
+shows a pre-command hook reading that context's channels. This explains the
+observed symptom; the exact cluster plugin version will also be logged on retry.
+The command-level fix has not yet been validated on HPC.
+
+No global/shared configuration is edited, no terms are auto-accepted, and no
+plugin is disabled. Official Senna pip requirements and Python minor are
+unchanged. The original defaults channel was a local bootstrap choice, not a
+requirement from Senna. `--no-default-packages` excludes unrelated packages a
+site/user configuration might automatically add to new environments.
 
 Push this commit locally, then on HPC from the existing project directory:
 
