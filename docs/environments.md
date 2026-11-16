@@ -1,9 +1,17 @@
 # Environment provenance and execution
 
-The returned infrastructure smoke passed. Senna setup job 116267 failed on
-compute-node GitHub connectivity before environment creation. Package installation
-and model imports have NOT run. Do not retry setup until connectivity is reviewed. Use separate environments; never install into the shared
-course environment. No model checkpoint is downloaded by these recipes.
+The infrastructure smoke passed. Senna setup job 116267 failed on GitHub
+connectivity before installation. Diagnostic job 116268 then confirmed that all
+seven tested Conda/PyPI/PyTorch endpoints were unreachable from cs001.hpc.coe.
+The supplied proxy then passed all seven package checks in job 116269.
+That job stopped at the Anaconda defaults-channel terms prompt. Model imports
+remain untested. No model checkpoints have been downloaded.
+
+See [network access configuration](network_access.md) for the current next
+step. The Python bootstrap now uses conda-forge with nodefaults. The setup preflight
+will check those new channel endpoints through the configured proxy before
+installation; any unreachable endpoint stops setup. Never install into the
+shared course environment.
 
 ## Official sources inspected
 
@@ -32,53 +40,19 @@ it is not installed on top of the root requirements. The evaluator uses root
 and checks the Senna model loader exists, avoiding a misleading top-level import
 success caused by upstream's broad exception handler.
 
-## Connectivity diagnosis — next run
+## Connectivity result
 
-Job 116267 failed after 2 minutes 12 seconds with exit 1:0 while cloning Senna
-from GitHub on the compute node. This demonstrates GitHub connectivity failure
-for that attempt; it does not establish whether PyPI, Conda or the PyTorch wheel
-server are blocked. Do not spend another installation allocation guessing.
-
-After pulling the next commit, run the small HEAD-only check on the login node:
-
-```bash
-set -a
-source .env
-set +a
-python3 -m src.network_check
-```
-
-Then submit the same check on a compute node:
-
-```bash
-sbatch --parsable --chdir="$PWD" \
-  --output="$CMPE249_ARTIFACT_ROOT/logs/package-network-%j.out" \
-  --error="$CMPE249_ARTIFACT_ROOT/logs/package-network-%j.err" \
-  scripts/hpc/check_network.sbatch
-```
-
-Return the complete login output, submission output, SLURM accounting, and both
-`package-network-<jobid>.out`/`.err` files. The job requests one GPU only because
-the confirmed partition is a GPU partition; it does not initialize CUDA or run
-model code. Maximum allocation is 3 minutes (0.05 GPU-hours). HTTP probes have
-10-second socket timeouts and run concurrently; no packages are downloaded.
-Success is PACKAGE_NETWORK_OK and exit 0:0. A missing route intentionally prints
-PACKAGE_NETWORK_BLOCKED and exits 1; return those failures without retrying setup.
-A root-path 404 from the Python file host proves reachability only, not a usable
-wheel download. No probe result guarantees dependency availability or solving.
-
-If compute package access is blocked, prepare an offline environment/package
-transfer route or request the cluster's supported proxy/mirror after reviewing
-the evidence. Do not install packages or solve large environments on the login
-node. No network bypass or environment-version substitution is authorized by
-these checks. The VAD container also needs Docker registry, OS-package and
-MMDetection3D GitHub access; a successful Senna package check does not validate
-those additional destinations.
+Job 116268 returned Network is unreachable for every tested Conda, PyPI and
+PyTorch endpoint. GitHub access had already timed out in job 116267. These results
+show the direct route failed. The diagnostic exit 1 is not a model failure.
+The subsequently supplied proxy, configured in ignored `.env`, passed the
+existing setup preflight in job 116269. The selected conda-forge endpoints are
+new and still require the next setup preflight.
 
 ## Stage source before any future setup job
 
-Use the network-enabled login node for source staging only (not environment
-creation). Existing source directories must be clean and at the pinned revision:
+If login-node network access is confirmed, use it for source staging only
+(not environment creation). Existing source directories must be clean and at the pinned revision:
 
 ```bash
 python3 -m src.upstream --root "$CMPE249_ARTIFACT_ROOT/upstream" senna vad
@@ -90,8 +64,15 @@ If the failed clone left an incomplete directory, preserve it and return the
 error before changing it. Compute-node setup uses `--verify-only`, so missing
 sources produce an immediate error without attempting GitHub access.
 
-## Senna setup — after connectivity review
+## Senna setup — retry with explicit bootstrap channels
 
+The bootstrap uses `conda-forge` plus `nodefaults`, following the defaults-channel
+terms failure in job 116269. This is an environment-specific channel change,
+not an upstream Python-version or Senna-package change. No terms were accepted
+on the user's behalf and no shared/global Conda configuration was changed.
+The original defaults channel was a local bootstrap choice, not a requirement
+specified by Senna. Conda's [environment-file documentation](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html#creating-an-environment-file-manually)
+explains that nodefaults excludes default channels for that environment.
 
 Push this commit locally, then on HPC from the existing project directory:
 
@@ -107,8 +88,8 @@ sbatch --parsable --chdir="$PWD" \
 ```
 
 Setup creates `$CMPE249_ARTIFACT_ROOT/environments/senna`. Conda executable
-availability was observed during the smoke test, but compute-node network access
-and environment resolution are unverified. Torch is installed first because
+availability was observed during the smoke test; package endpoint access through
+the proxy passed in job 116269. Resolution under the new channel has not run. Torch is installed first because
 DeepSpeed metadata generation may import it. `DS_BUILD_OPS=0` disables optional
 DeepSpeed ahead-of-time extension builds for this inference-only setup; package
 versions remain the official ones. This build setting is a recorded deviation,

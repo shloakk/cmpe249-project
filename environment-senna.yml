@@ -2,7 +2,8 @@
 # Python minor comes from the pinned Senna README. No model weights are installed.
 name: senna
 channels:
-  - defaults
+  - conda-forge
+  - nodefaults
 dependencies:
   - python=3.10
   - pip

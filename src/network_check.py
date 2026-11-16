@@ -8,10 +8,8 @@ import urllib.request
 
 # The file host root may return 404; that still proves HTTP/TLS reachability.
 ENDPOINTS = {
-    'conda-main-linux': ('https://repo.anaconda.com/pkgs/main/linux-64/repodata.json', False),
-    'conda-main-noarch': ('https://repo.anaconda.com/pkgs/main/noarch/repodata.json', False),
-    'conda-r-linux': ('https://repo.anaconda.com/pkgs/r/linux-64/repodata.json', False),
-    'conda-r-noarch': ('https://repo.anaconda.com/pkgs/r/noarch/repodata.json', False),
+    'conda-forge-linux': ('https://conda.anaconda.org/conda-forge/linux-64/repodata.json', False),
+    'conda-forge-noarch': ('https://conda.anaconda.org/conda-forge/noarch/repodata.json', False),
     'pypi-index': ('https://pypi.org/simple/pip/', False),
     'pypi-files': ('https://files.pythonhosted.org/', True),
     'pytorch-cu118': ('https://download.pytorch.org/whl/cu118/torch/', False),

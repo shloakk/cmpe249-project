@@ -76,6 +76,48 @@
 - Next action: return login/compute network diagnostics; choose installation or
   offline transfer based on evidence. Preserve any partial clone/environment.
 
+## 2026-11-15 — Compute package connectivity, blocked
+
+- Commit: b8ab435d38392335a40c32af5c48c9f3b5d112db; clean working tree.
+- Command: `scripts/hpc/check_network.sbatch`; job 116268 on cs001.hpc.coe.
+- Scheduler: FAILED as designed for a blocked route, exit 1:0; elapsed 41 seconds;
+  batch MaxRSS 28.50M. One assigned GPU (0), unused by the diagnostic.
+- Approximate allocated GPU-hours: 41/3600 = 0.01139. AllocTRES was truncated in
+  returned accounting; use the submission request for this estimate.
+- Logs: `logs/package-network-116268.out` and `.err` under the artifact root;
+  complete stdout/accounting supplied in chat, no stderr content pasted.
+- Results: all seven Conda/PyPI/PyTorch endpoint probes returned Errno 101,
+  Network is unreachable; PACKAGE_NETWORK_BLOCKED. No downloads, installation,
+  CUDA initialization, model imports or model metrics.
+- Conclusion: the tested direct compute-node route is unavailable. The user
+  subsequently supplied a proxy route; no proxy success evidence exists yet.
+- Next action: configure proxy variables in ignored .env, stage the pinned source,
+  then run the existing setup job. Its network preflight must pass before package
+  installation. No separate connectivity allocation is needed.
+- Gate: infrastructure passed; both model environment imports still PENDING.
+
+## 2026-11-15 — Proxy connectivity passed; Conda bootstrap blocked by terms
+
+- Commit: b8ab435d38392335a40c32af5c48c9f3b5d112db; clean working tree.
+- Command: `scripts/hpc/setup_senna.sbatch`; job 116269 on cs001.hpc.coe.
+- Scheduler: FAILED, exit 1:0; elapsed 8 seconds; batch MaxRSS 3576K.
+- One assigned GPU (0); estimated allocated GPU-hours 8/3600 = 0.00222.
+- Logs: `logs/senna-environment-116269.out` and `.err` under the artifact root;
+  complete stdout/stderr and prior accounting returned in chat.
+- Results: source VERIFIED at the pinned Senna revision; all seven package
+  endpoint checks reachable via the supplied proxy; PACKAGE_NETWORK_OK.
+- Failure: CondaToSNonInteractiveError for the defaults main/r channels at
+  environment creation. No pip package installation or model imports occurred.
+- Resolution prepared locally: replace the bootstrap defaults channel with
+  conda-forge plus nodefaults; update preflight to test the new channel endpoints.
+  No channel terms accepted; official Python minor and pip requirements unchanged.
+- Local checks: 17 unit tests, shell/Python syntax, privacy/naming/size audit and
+  whitespace checks passed. No local Linux package solve or HPC installation.
+- Gate: previous proxy route PASSED; new bootstrap channel reachability and both
+  model environment import gates PENDING. Do not begin dataset/model runs.
+- Next action: retry Senna setup through the proxy; preserve any existing prefix
+  and return its guard error if present, rather than removing files blindly.
+
 ## Template for each subsequent attempt (including failures)
 
 - Date / commit / dirty status:

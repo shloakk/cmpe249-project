@@ -55,3 +55,12 @@ candidates are missing. No full dataset validation has been performed.
 Job 116267 on cs001.hpc.coe timed out accessing GitHub over HTTPS during source
 cloning. This is evidence of that failed connection, not proof of a cluster-wide
 ban on every package server. Conda/PyPI/PyTorch connectivity remains unverified.
+
+Job 116268 subsequently reported Errno 101 (Network is unreachable) for all seven
+Conda/PyPI/PyTorch probes from cs001.hpc.coe. The direct route failed. A user-supplied
+proxy route is now available for testing; its connectivity remains unverified.
+
+Job 116269 then verified the pinned Senna source and PACKAGE_NETWORK_OK through
+the user-supplied proxy. Conda stopped on the defaults main/r channel terms prompt
+before pip installation. The candidate bootstrap now uses conda-forge/nodefaults;
+that new channel route is not yet verified on HPC. No terms were auto-accepted.
