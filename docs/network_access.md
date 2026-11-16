@@ -8,15 +8,15 @@ by this evidence. Job 116270 also reached both conda-forge endpoints, but the
 YAML-only channel change did not resolve the terms pre-check.
 
 Add the supplied `http_proxy` and `https_proxy` values only to the ignored `.env`.
-The existing SLURM scripts load and export that file, and Git, pip, Conda and the
+The installer and validation scripts load and export that file; Git, pip, Conda and the
 Python connectivity probe inherit those settings. Keep the private proxy address
 out of tracked examples. Never disable TLS certificate verification.
 
 Stage the pinned Senna source from a network-enabled node using `src.upstream`.
-Then submit the existing Senna setup job. It verifies staged sources and runs the
+Then run the Senna installer directly in the terminal. It verifies staged sources and runs the
 package connectivity check before Conda creation or installation; any failed
 check stops setup. A successful proxy check can proceed to installation in the
-same allocation. No model weights are downloaded.
+same terminal run; no GPU allocation is used for installation. No model weights are downloaded.
 
 Return complete setup logs and SLURM accounting. Distinguish PACKAGE_NETWORK_OK
 from SENNA_IMPORTS_OK: only the latter, correct package versions and exactly one

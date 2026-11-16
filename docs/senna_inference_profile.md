@@ -57,13 +57,10 @@ what was actually resolved.
 
 Use the existing prefix, preserving the successful bootstrap and downloaded
 wheels. The default remains to refuse an existing prefix. For this reviewed
-partial install, submit with explicit `CMPE249_RESUME_SENNA=1`:
+partial install, run directly with explicit `CMPE249_RESUME_SENNA=1`:
 
 ```bash
-sbatch --parsable --export=ALL,CMPE249_RESUME_SENNA=1 --chdir="$PWD" \
-  --output="$CMPE249_ARTIFACT_ROOT/logs/senna-environment-%j.out" \
-  --error="$CMPE249_ARTIFACT_ROOT/logs/senna-environment-%j.err" \
-  scripts/hpc/setup_senna.sbatch
+CMPE249_RESUME_SENNA=1 bash scripts/environments/setup_senna.sh
 ```
 
 Resume requires a Conda history file, a working Python 3.10 interpreter and
@@ -82,3 +79,9 @@ The probe checks every selected installed version, imports the actual
 operation and NumPy↔torch interoperability, and runs pip check/freeze.
 Require `SENNA_IMPORTS_OK`, exactly one visible GPU and SLURM COMPLETED/exit 0:0.
 Even success does not establish checkpoint loading or Senna prediction accuracy.
+
+Installation now ends with SENNA_PACKAGES_OK, package metadata and pip checks;
+this mode performs no model/torch imports or GPU initialization. It runs without
+SLURM and logs to `logs/senna-install-<UTC>-<pid>.log` under the artifact root.
+Only the separate `scripts/hpc/validate_senna.sbatch` job tests imports and CUDA.
+See [environment execution](environments.md) for validation submission commands.

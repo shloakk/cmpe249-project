@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
-: "${SLURM_JOB_ID:?Run environment setup through SLURM}"
+repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
+cd "$repo"
+set -a
+source .env
+set +a
 python_bin=${CMPE249_PYTHON:-python3}
 "$python_bin" -m src.config
+mkdir -p "$CMPE249_ARTIFACT_ROOT/logs"
+log="$CMPE249_ARTIFACT_ROOT/logs/senna-install-$(date -u +%Y%m%dT%H%M%SZ)-$$.log"
+exec > >(tee "$log") 2>&1
+printf 'Install log: %s\nUTC: ' "$log"; date -u +%FT%TZ
+printf 'Host: '; hostname
+printf 'Commit: '; git rev-parse HEAD
+printf 'Dirty status:\n'; git status --short
+printf 'Command: bash scripts/environments/setup_senna.sh\n'
+exec 9>"$CMPE249_ARTIFACT_ROOT/logs/.senna-setup.lock"
+flock -n 9 || { echo 'Senna installation or validation already active' >&2; exit 1; }
 export PYTHONDONTWRITEBYTECODE=1
 export PIP_CACHE_DIR="$CMPE249_ARTIFACT_ROOT/caches/pip"
 export CONDA_PKGS_DIRS="$CMPE249_ARTIFACT_ROOT/caches/conda-pkgs"
@@ -49,4 +63,4 @@ fi
 "$prefix/bin/python" -m pip install \
   --extra-index-url https://download.pytorch.org/whl/cu118 -r "$profile"
 conda list --prefix "$prefix" --explicit
-"$prefix/bin/python" scripts/environments/probe.py senna --upstream "$upstream/senna"
+"$prefix/bin/python" scripts/environments/probe.py senna --packages-only --upstream "$upstream/senna"

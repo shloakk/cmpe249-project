@@ -1,4 +1,4 @@
-"""Import real model components and test the allocated GPU without weights."""
+"""Check installed package versions, optionally testing model imports and CUDA."""
 import argparse
 import importlib
 import importlib.metadata as metadata
@@ -15,6 +15,7 @@ from src.senna_requirements import project
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('model', choices=('senna', 'vad'))
 parser.add_argument('--upstream', required=True, type=Path)
+parser.add_argument('--packages-only', action='store_true', help='Check metadata and pip consistency without importing torch or initializing CUDA')
 args = parser.parse_args()
 print('python:', sys.version, 'executable:', sys.executable, 'host:', platform.node(), flush=True)
 print('CUDA_VISIBLE_DEVICES:', os.environ.get('CUDA_VISIBLE_DEVICES'), flush=True)
@@ -33,6 +34,11 @@ for name, version in expected.items():
     print(name, actual, flush=True)
     if actual != version:
         raise SystemExit(f'{name}: expected {version}, found {actual}')
+if args.packages_only:
+    subprocess.run([sys.executable, '-m', 'pip', 'check'], check=True)
+    subprocess.run([sys.executable, '-m', 'pip', 'freeze', '--all'], check=True)
+    print(args.model.upper() + '_PACKAGES_OK; GPU/model validation not performed', flush=True)
+    sys.exit(0)
 import torch
 print(json.dumps({'torch_cuda': torch.version.cuda, 'cuda_available': torch.cuda.is_available(),
                   'visible_gpu_count': torch.cuda.device_count()}), flush=True)

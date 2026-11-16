@@ -172,6 +172,26 @@
 - Gate: bootstrap/package installation partially PASSED; model imports PENDING.
 - Next action: one explicit resume job, return complete logs and accounting.
 
+## 2026-11-15 — Separate package installation from GPU validation
+
+- Input: user clarification of the normal login-terminal installation workflow.
+- Correction: earlier installation jobs unnecessarily reserved GPUs. A GPU is
+  needed for CUDA/model validation, not package installation. No login-node ban
+  on this installation was established; the previous assumed restriction was
+  not supported by the supplied cluster evidence.
+- Change: direct installer loads private configuration, acquires a shared lock,
+  resumes the reviewed environment and writes a timestamped artifact log. Its
+  package-only probe checks metadata/pip consistency without torch/model imports.
+- GPU validation: separate validate_senna.sbatch, one A100, 2 CPUs, 8 GB RAM,
+  at most 10 minutes; installs/downloads nothing. Replaces the combined job.
+- Local validation: 24 unit tests, shell/Python syntax, privacy/naming/size and
+  whitespace checks passed. Tests explicitly reject runtime imports in the
+  package-only path. No new HPC install or GPU validation has been run.
+- Outputs expected: logs/senna-install-<UTC>-<pid>.log; profile/audit files under
+  environments; later logs/senna-validation-<jobid>.out and .err.
+- Next action: user runs terminal installer with CMPE249_RESUME_SENNA=1 and
+  returns its full log. Model environment gate remains PENDING.
+
 ## Template for each subsequent attempt (including failures)
 
 - Date / commit / dirty status:

@@ -94,10 +94,7 @@ git pull --ff-only origin hpc-readiness
 set -a
 source .env
 set +a
-sbatch --parsable --export=ALL,CMPE249_RESUME_SENNA=1 --chdir="$PWD" \
-  --output="$CMPE249_ARTIFACT_ROOT/logs/senna-environment-%j.out" \
-  --error="$CMPE249_ARTIFACT_ROOT/logs/senna-environment-%j.err" \
-  scripts/hpc/setup_senna.sbatch
+CMPE249_RESUME_SENNA=1 bash scripts/environments/setup_senna.sh
 ```
 
 Setup initially created `$CMPE249_ARTIFACT_ROOT/environments/senna` in job
@@ -108,12 +105,32 @@ versions of selected runtime packages and the upstream source remain unchanged.
 No VLM training dependencies are installed; the previous DS_BUILD_OPS setting is
 no longer needed because DeepSpeed is outside this frozen-inference profile.
 
-The job requests one A100, 4 CPUs, 32 GB RAM and at most 2 hours. Existing caches
-are reused, and a lock blocks concurrent setup. Without the explicit resume flag,
-any existing prefix is preserved and setup stops. If resume validation fails,
-return the error before changing the prefix. Do not substitute package versions
-or delete the working torch installation. Package lists before and after the
-attempt, profile provenance and import/CUDA results are logged.
+The installer runs directly from the terminal with no SLURM or GPU requirement.
+It loads ignored `.env`, reuses cached packages and logs to
+`$CMPE249_ARTIFACT_ROOT/logs/senna-install-<UTC>-<pid>.log`. A lock blocks concurrent
+installation/validation. Without the explicit resume flag an existing prefix is
+preserved and setup stops. No environment is deleted or recreated during resume.
+
+Installation checks selected package versions and pip consistency through
+`--packages-only`. This mode never imports torch/model code or initializes CUDA.
+Require SENNA_PACKAGES_OK before submitting GPU validation. This package check
+alone does not pass the model environment gate.
+
+## Senna GPU validation — after package installation passes
+
+```bash
+sbatch --parsable --chdir="$PWD" \
+  --output="$CMPE249_ARTIFACT_ROOT/logs/senna-validation-%j.out" \
+  --error="$CMPE249_ARTIFACT_ROOT/logs/senna-validation-%j.err" \
+  scripts/hpc/validate_senna.sbatch
+```
+
+This separate job requests one A100, 2 CPUs, 8 GB RAM and at most 10 minutes.
+It verifies the pinned source, checks actual model imports and CUDA operations,
+and writes `senna-validation-<jobid>.out`/`.err`. It installs no packages and
+downloads no weights. The previous combined `setup_senna.sbatch` was replaced
+with this validation-only job. Return both logs and complete SLURM accounting.
+Require SENNA_IMPORTS_OK, one visible GPU, COMPLETED and exit 0:0.
 
 ## VAD container — prepared, run after reviewing the Senna attempt
 
