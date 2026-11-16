@@ -70,3 +70,8 @@ the same configured-defaults terms prompt. YAML nodefaults was insufficient for
 the installed pre-command check. Candidate setup now selects the channel with
 explicit command-line override; installed Conda/plugin versions and the result
 of that command remain pending.
+
+Job 116271 passed the explicit channel override and created Python 3.10.22 with
+installed torch 2.0.1+cu118/torchvision 0.15.2+cu118/torchaudio 2.0.2+cu118. Full
+requirements then failed on aidisdk 0.18.0 availability. The partial environment
+and cache are preserved. Package installs are evidenced; GPU imports are not.

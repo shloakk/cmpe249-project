@@ -1,19 +1,13 @@
 # Environment provenance and execution
 
-The infrastructure smoke passed. Senna setup job 116267 failed on GitHub
-connectivity before installation. Diagnostic job 116268 then confirmed that all
-seven tested Conda/PyPI/PyTorch endpoints were unreachable from cs001.hpc.coe.
-The supplied proxy then passed all seven package checks in job 116269.
-That job stopped at the Anaconda defaults-channel terms prompt. Job 116270
-reached conda-forge through the proxy but hit the same prompt despite nodefaults.
-Model imports
-remain untested. No model checkpoints have been downloaded.
+The infrastructure smoke and proxy/channel access passed. Job 116271 created
+the Python 3.10 environment and installed the torch family, then failed on the
+unavailable upstream aidisdk pin. Model imports have not run. No model checkpoints
+have been downloaded. The next attempt explicitly resumes that reviewed prefix
+with a [documented inference-only profile](senna_inference_profile.md).
 
-See [network access configuration](network_access.md) for the current next
-step. The Python bootstrap now uses explicit command-line channel exclusion. The setup preflight
-will check those new channel endpoints through the configured proxy before
-installation; any unreachable endpoint stops setup. Never install into the
-shared course environment.
+See [network access configuration](network_access.md) for proxy provenance.
+Never install into the shared course environment.
 
 ## Official sources inspected
 
@@ -24,7 +18,7 @@ Source checkouts are stored under `$CMPE249_ARTIFACT_ROOT/upstream`.
 
 | Source | Evidence | Recipe choice |
 |---|---|---|
-| [Senna README](https://github.com/hustvl/Senna/blob/31a3a2336e9494c254b612665fe55e95f67e9cae/README.md) and [requirements](https://github.com/hustvl/Senna/blob/31a3a2336e9494c254b612665fe55e95f67e9cae/requirements.txt) | Python 3.10; torch 2.0.1+cu118; torchvision 0.15.2+cu118; transformers 4.31.0 | Install complete root requirements unchanged in an isolated Conda prefix |
+| [Senna README](https://github.com/hustvl/Senna/blob/31a3a2336e9494c254b612665fe55e95f67e9cae/README.md) and [requirements](https://github.com/hustvl/Senna/blob/31a3a2336e9494c254b612665fe55e95f67e9cae/requirements.txt) | Python 3.10; torch 2.0.1+cu118; torchvision 0.15.2+cu118; transformers 4.31.0 | Select a documented inference-only projection of exact root requirements pins |
 | [VAD install guide](https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/docs/install.md) and [export](https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/requirements.txt) | Guide: Python 3.8; torch 1.9.1+cu111; MMCV-full 1.4.0; mmdet 2.14.0; mmseg 0.14.1; mmdet3d 0.17.1; nuScenes devkit 1.1.9 | Legacy stack in a CUDA 11.1 development container |
 
 VAD's requirements file is a Conda export containing PyPI entries, not a pip
@@ -48,8 +42,8 @@ Job 116268 returned Network is unreachable for every tested Conda, PyPI and
 PyTorch endpoint. GitHub access had already timed out in job 116267. These results
 show the direct route failed. The diagnostic exit 1 is not a model failure.
 The subsequently supplied proxy, configured in ignored `.env`, passed the
-existing setup preflight in job 116269. The selected conda-forge endpoints are
-new and still require the next setup preflight.
+existing setup preflight in job 116269. Both selected conda-forge endpoints
+subsequently passed in jobs 116270 and 116271.
 
 ## Stage source before any future setup job
 
@@ -66,7 +60,7 @@ If the failed clone left an incomplete directory, preserve it and return the
 error before changing it. Compute-node setup uses `--verify-only`, so missing
 sources produce an immediate error without attempting GitHub access.
 
-## Senna setup — retry with explicit command-line channel selection
+## Senna setup — explicit channels and inference-profile resume
 
 Job 116270 showed that `nodefaults` inside the YAML did not prevent this
 installation's terms pre-check from inspecting configured defaults channels.
@@ -84,12 +78,12 @@ states that override-channels excludes default and configured channels. Unlike
 an environment-file-only selection, the flags are present when Conda initializes
 the command context. The [terms plugin source](https://github.com/anaconda/conda-anaconda-tos/blob/main/conda_anaconda_tos/plugin.py)
 shows a pre-command hook reading that context's channels. This explains the
-observed symptom; the exact cluster plugin version will also be logged on retry.
-The command-level fix has not yet been validated on HPC.
+observed symptom. Job 116271 logged Conda 25.11.0 and terms plugin 0.2.1,
+and the explicit command successfully created the Python environment.
 
 No global/shared configuration is edited, no terms are auto-accepted, and no
-plugin is disabled. Official Senna pip requirements and Python minor are
-unchanged. The original defaults channel was a local bootstrap choice, not a
+plugin is disabled. The upstream requirements file and Python minor are
+unchanged; the installed inference-only subset is documented separately. The original defaults channel was a local bootstrap choice, not a
 requirement from Senna. `--no-default-packages` excludes unrelated packages a
 site/user configuration might automatically add to new environments.
 
@@ -100,26 +94,26 @@ git pull --ff-only origin hpc-readiness
 set -a
 source .env
 set +a
-sbatch --parsable --chdir="$PWD" \
+sbatch --parsable --export=ALL,CMPE249_RESUME_SENNA=1 --chdir="$PWD" \
   --output="$CMPE249_ARTIFACT_ROOT/logs/senna-environment-%j.out" \
   --error="$CMPE249_ARTIFACT_ROOT/logs/senna-environment-%j.err" \
   scripts/hpc/setup_senna.sbatch
 ```
 
-Setup creates `$CMPE249_ARTIFACT_ROOT/environments/senna`. Conda executable
-availability was observed during the smoke test; package endpoint access through
-the proxy passed in job 116269. Resolution under the new channel has not run. Torch is installed first because
-DeepSpeed metadata generation may import it. `DS_BUILD_OPS=0` disables optional
-DeepSpeed ahead-of-time extension builds for this inference-only setup; package
-versions remain the official ones. This build setting is a recorded deviation,
-not a model-logic change. The probe does not run training or load weights.
+Setup initially created `$CMPE249_ARTIFACT_ROOT/environments/senna` in job
+116271. The explicit resume flag now validates and reuses that prefix. The
+inference-only package profile is documented in [the profile audit](senna_inference_profile.md),
+including the unavailable aidisdk and all other excluded packages. Official
+versions of selected runtime packages and the upstream source remain unchanged.
+No VLM training dependencies are installed; the previous DS_BUILD_OPS setting is
+no longer needed because DeepSpeed is outside this frozen-inference profile.
 
-The job requests one A100, 4 CPUs, 32 GB RAM, at most 2 hours (up to 2 allocated
-GPU-hours). It uses caches and temp space under the artifact root. A lock blocks
-concurrent setup, and any existing environment prefix causes an explicit stop
-rather than overwriting a successful or partially installed environment.
-If it fails, preserve the directory and return logs before deciding how to retry.
-Do not silently remove unavailable packages or upgrade dependency pins.
+The job requests one A100, 4 CPUs, 32 GB RAM and at most 2 hours. Existing caches
+are reused, and a lock blocks concurrent setup. Without the explicit resume flag,
+any existing prefix is preserved and setup stops. If resume validation fails,
+return the error before changing the prefix. Do not substitute package versions
+or delete the working torch installation. Package lists before and after the
+attempt, profile provenance and import/CUDA results are logged.
 
 ## VAD container — prepared, run after reviewing the Senna attempt
 

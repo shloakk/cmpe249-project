@@ -143,6 +143,35 @@
 - Next action: one retry using explicit CLI channel selection; return complete
   stdout/stderr and SLURM accounting. Do not remove an existing environment prefix.
 
+## 2026-11-15 — Bootstrap and torch install passed; unavailable upstream SDK
+
+- Commit: b16629b3c0c5867e300f17db60f150da40301d88; clean working tree.
+- Command: `scripts/hpc/setup_senna.sbatch`; job 116271 on cs001.hpc.coe.
+- Scheduler: FAILED, exit 1:0; elapsed 185 seconds; batch MaxRSS 275200K.
+- One assigned GPU (0); estimated allocated GPU-hours 185/3600 = 0.05139.
+- Logs: `logs/senna-environment-116271.out` and `.err` under the artifact root;
+  complete logs/accounting returned in chat. Conda 25.11.0, terms plugin 0.2.1.
+- Success: explicit channel override passed; isolated Python 3.10.22 prefix
+  created. Torch 2.0.1+cu118, torchvision 0.15.2+cu118, torchaudio 2.0.2+cu118
+  and triton 2.0.0 installed. A 2.3 GB torch wheel was downloaded into cache.
+- Failure: full official requirements could not resolve aidisdk==0.18.0; only
+  versions 1.0.0 and 1.1.0 were offered. Do not substitute an unrelated version.
+- Limitations: initial torch dependency resolution installed NumPy 2.2.6 and
+  other newer transient dependencies. No torch import, CUDA operation, checkpoint
+  loading or model metrics were reached. Package installation is not an import gate.
+- Resolution: audit pinned inference source; aidisdk has no code reference.
+  Generate a documented 37-package frozen-inference projection with unchanged
+  upstream pins, including NumPy 1.26.4; record all 130 exclusions in JSON.
+  Explicitly resume the reviewed prefix after Python/torch metadata validation.
+- Local checks: 22 tests; shell/Python syntax and privacy/naming/size/whitespace
+  checks passed; generated profile verified against upstream requirements hash.
+  Public release metadata exists for 34 selected non-torch packages and their
+  default Linux/Python 3.10 dependencies match profile pins. No local GPU test.
+- Deviation: inference-only installation replaces the unresolvable full export;
+  details and omissions in senna_inference_profile.md. No model-code changes.
+- Gate: bootstrap/package installation partially PASSED; model imports PENDING.
+- Next action: one explicit resume job, return complete logs and accounting.
+
 ## Template for each subsequent attempt (including failures)
 
 - Date / commit / dirty status:

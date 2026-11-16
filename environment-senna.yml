@@ -1,5 +1,5 @@
 # Bootstrap reference; setup_senna.sh uses matching explicit conda create arguments.
-# Install the hashed official requirements via that script.
+# That script selects audited inference pins from hashed official requirements.
 # Python minor comes from the pinned Senna README. No model weights are installed.
 name: senna
 channels:

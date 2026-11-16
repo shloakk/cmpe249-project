@@ -31,7 +31,8 @@ with the same Python/pip specifications. This explicit command-level selection
 addresses the pre-command terms check seen in job 116270. It affects only the
 new environment; no shared or user-wide Conda configuration is modified
 and no channel terms are accepted automatically. Python remains 3.10 and the
-hashed official Senna pip requirements are unchanged. The network preflight
+hashed upstream requirements file is unchanged; installation now selects a
+documented inference-only subset after the aidisdk failure in job 116271. The network preflight
 checks the selected conda-forge Linux/noarch indexes; these passed in job 116270.
 
 Conda documents `nodefaults` as excluding default channels for that environment:

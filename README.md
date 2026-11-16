@@ -43,8 +43,10 @@ safety. A planner ignoring the action is a failure requiring investigation.
 
 **Status:** HPC infrastructure smoke passed (job 116264, exit 0:0). Official
 source revisions and candidate environment recipes are pinned. Model environment
-installation/import checks are pending: proxy access passed, and a bootstrap
-command-line channel override is prepared after the repeated terms prompt in job 116270. No model weights, prediction caches,
+bootstrap and torch-family installation passed in job 116271. The full export
+failed on unavailable aidisdk; the next attempt resumes with a documented
+[inference-only package profile](docs/senna_inference_profile.md). Model imports
+remain pending. No model weights, prediction caches,
 baseline evaluation or planner implementation exist yet. See
 [environment setup](docs/environments.md) for the next environment setup attempt.
 

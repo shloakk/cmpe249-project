@@ -9,6 +9,9 @@ import platform
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.senna_requirements import project
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('model', choices=('senna', 'vad'))
 parser.add_argument('--upstream', required=True, type=Path)
@@ -21,6 +24,10 @@ expected = {'senna': {'torch': '2.0.1+cu118', 'torchvision': '0.15.2+cu118',
             'vad': {'torch': '1.9.1+cu111', 'torchvision': '0.10.1+cu111',
                     'mmcv-full': '1.4.0', 'mmdet': '2.14.0', 'mmsegmentation': '0.14.1',
                     'mmdet3d': '0.17.1'}}[args.model]
+if args.model == 'senna':
+    profile = json.loads((Path(__file__).resolve().parents[2] / 'configs/senna-inference-packages.json').read_text())
+    pins, _ = project((args.upstream / 'requirements.txt').read_text(), profile['packages'])
+    expected = dict(pin.split('==', 1) for pin in pins)
 for name, version in expected.items():
     actual = metadata.version(name)
     print(name, actual, flush=True)
@@ -35,7 +42,7 @@ print('assigned_gpu:', torch.cuda.get_device_name(0), flush=True)
 x = torch.arange(16, device='cuda', dtype=torch.float32).reshape(4, 4)
 assert torch.isfinite(x @ x).all().item()
 torch.cuda.synchronize()
-modules = {'senna': ['llava.model.language_model.llava_llama', 'llava.model.multimodal_projector.Qformer',
+modules = {'senna': ['llava.model.language_model.llava_llama', 'llava.senna.senna_llava_llama', 'llava.model.multimodal_projector.Qformer',
                       'llava.model.builder', 'data_tools.senna_qa_utils'],
            'vad': ['mmcv.ops', 'mmdet', 'mmseg', 'mmdet3d', 'projects.mmdet3d_plugin']}[args.model]
 for name in modules:
@@ -43,7 +50,11 @@ for name in modules:
     print('IMPORTED', name, getattr(module, '__file__', None), flush=True)
 if args.model == 'senna':
     from llava.model.builder import load_senna_pretrained_model
+    from llava.senna.senna_llava_llama import SennaLlavaLlamaForCausalLM
     assert callable(load_senna_pretrained_model)
+    assert issubclass(SennaLlavaLlamaForCausalLM, torch.nn.Module)
+    import numpy as np
+    assert np.allclose(torch.from_numpy(np.array([1., 2.], dtype=np.float32)).numpy(), [1., 2.])
 else:
     from mmcv.ops import nms
     boxes = torch.tensor([[0., 0., 1., 1.], [0., 0., 1., 1.]], device='cuda')
