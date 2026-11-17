@@ -1,14 +1,73 @@
-# Lightweight Exposure Alignment for VLM-Guided End-to-End Autonomous Driving
+# Error-Aware Meta-Action Conditioning for Autonomous Planning
 
-## Team Members
+This repository evaluates whether a trajectory planner becomes more robust when
+its training-time conditioning reflects the measured error distribution of an
+upstream vision-language model.
 
-- Parth Panchal (018333965)
-- Shloak Aggarwal (018189938)
+The pipeline runs the released Senna-VLM on nuScenes, records speed and path
+meta-actions, audits its joint confusion distribution, and conditions a frozen
+VAD-Tiny planner through a small residual adapter. The complete Senna-E2E system
+is not publicly available, so the planner integration is explicitly a
+Senna-style reconstruction built on the released VAD implementation.
 
-## Abstract
+## Experimental design
 
-Recent autonomous-driving systems such as Senna use a Vision-Language Model (VLM) to predict high-level driving decisions and an end-to-end planner to generate vehicle trajectories. A train-inference mismatch can arise when the planner is trained using ground-truth decisions but receives imperfect VLM predictions during deployment. This project investigates whether lightweight exposure to VLM-predicted decisions during supervised planner training can improve decision-planning consistency and robustness without reinforcement learning or large-scale closed-loop alignment. Using the original Senna architecture as a baseline, we will keep the VLM fixed, cache its predictions, and compare ground-truth, predicted, mixed, scheduled, and confidence-aware planner conditioning strategies. Experiments will use the public Senna codebase and nuScenes-based evaluation, measuring trajectory displacement error, collision-related metrics, decision-planning consistency, and robustness to injected upstream decision errors. The study will assess whether reducing the distribution mismatch at the VLM-to-planner interface provides an effective, computationally feasible alternative to more complex alignment methods.
+| ID | Planner conditioning | Role |
+|---|---|---|
+| C0 | Released VAD-Tiny without an adapter | Baseline |
+| C1 | Ground-truth speed and path actions | Oracle conditioning |
+| C2 | Uniform corruption at the measured Senna error rate | Matched-rate control |
+| C3 | Empirical joint Senna confusion distribution | Error-aware conditioning |
 
-## Selected Track
+C1-C3 share the same adapter architecture, initialization, seed, optimizer,
+data order, and training schedule. The adapter's final projection is initialized
+to zero, preserving the released planner output before optimization. All
+non-adapter parameters remain frozen.
 
-VLM-Guided Autonomous Driving
+## Pipeline
+
+1. Convert VAD-style nuScenes annotations into six-camera Senna manifests.
+2. Run deterministic Senna inference into a resumable JSONL cache.
+3. Export parse rates, confusion matrices, per-class metrics, and joint errors.
+4. Build C1-C3 configurations from the measured validation distribution.
+5. Train only the residual meta-action adapter.
+6. Evaluate C0-C3 with the same cached real Senna predictions.
+7. Export a report-ready planning metrics table.
+
+## Repository layout
+
+```text
+configs/             Path templates, dependency constraints, upstream locks
+containers/          Reproducible VAD Apptainer definition
+integrations/vad/    Additive VAD detector/head integration
+scripts/hpc/         SLURM jobs for validation, inference, training, evaluation
+src/error_audit/     Prediction parsing and confusion analysis
+src/planner_adapter/ Standalone residual adapter
+src/senna_cache/     Manifest generation and resumable inference
+tests/               Dependency-light unit tests
+```
+
+## Quick start
+
+```bash
+cp .env.example .env
+# Edit .env with local absolute paths.
+set -a; source .env; set +a
+python3 -m src.config
+python3 -m unittest discover -s tests -v
+```
+
+See [HPC_RUNBOOK.md](HPC_RUNBOOK.md) for end-to-end execution and
+[REPRODUCIBILITY.md](REPRODUCIBILITY.md) for the artifact contract. Dataset and
+checkpoint files are intentionally excluded from Git.
+
+## Upstream provenance
+
+Official source revisions are pinned in `configs/upstream-lock.json`:
+
+- `hustvl/Senna` for released VLM inference;
+- `hustvl/VAD` for the downstream planning baseline;
+- `open-mmlab/mmdetection3d` for the legacy VAD runtime.
+
+The reported planning metrics are open-loop proxies and do not establish
+closed-loop or real-world driving safety.

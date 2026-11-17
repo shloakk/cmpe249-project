@@ -1,0 +1,10 @@
+# Bootstrap reference; setup_senna.sh uses matching explicit conda create arguments.
+# That script selects audited inference pins from hashed official requirements.
+# Python minor comes from the pinned Senna README. No model weights are installed.
+name: senna
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.10
+  - pip

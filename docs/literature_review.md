@@ -1,5 +1,18 @@
 # Literature and State-of-the-Art Survey
 
+> Scope update (2026-11-15): The current project is **Empirical Error-Aware
+> Conditioning for Senna-Style VLM-Guided Planning**. Reproduce released
+> Senna-VLM, then reconstruct an action adapter on released VAD Base/Tiny;
+> complete Senna-E2E is unavailable. Senna-2 is the principal SOTA comparison.
+> Required conditions are C0 released VAD, C1 ground-truth actions, C2 uniform
+> corruption matched to measured actual-change rate, and C3 development-split
+> empirical confusion-aware corruption. Start with one seed and a measured
+> pilot; predicted-only and confidence gating are optional. This supersedes
+> earlier mixed/scheduled training and mandatory three-seed recommendations.
+> The contribution is empirical error-aware supervised conditioning, not generic
+> scheduled sampling. Earlier cited claims below are preserved historical survey
+> content and were not independently reverified during infrastructure setup. No runs exist yet.
+
 ## Lightweight Exposure Alignment for VLM-Guided End-to-End Autonomous Driving
 
 **Survey date:** September 8, 2026  
@@ -97,7 +110,7 @@ This architecture reinforces the logic behind Senna's division of labor: semanti
 
 EMMA explores the opposite architectural extreme [8]. Built on a multimodal large-model foundation, it represents navigation commands, ego state, trajectories, 3D objects, and road-graph elements in a shared language space. Task-specific prompts allow one model to generate multiple driving outputs, and multitask co-training improves planning, detection, and road-graph tasks. The current paper reports state-of-the-art motion-planning results on nuScenes and competitive results on Waymo benchmarks.
 
-A unified model can reduce explicit handoff errors because there is no separate frozen VLM prediction passed into an independently trained planner. It also sacrifices some of the modularity, computational economy, and diagnostic clarity of Senna. For a course project with limited compute, retraining or reproducing a generalist multimodal model is much less feasible than fine-tuning a downstream planner.
+A unified model can reduce explicit handoff errors because there is no separate frozen VLM prediction passed into an independently trained planner. It also sacrifices some of the modularity, computational economy, and diagnostic clarity of Senna. Under a constrained compute budget, retraining or reproducing a generalist multimodal model is much less feasible than fine-tuning a downstream planner.
 
 **Implication.** Exposure alignment is most valuable when a modular architecture is retained for cost, interpretability, or component reuse. EMMA is a useful architectural comparator, not a practical experimental baseline for this project.
 

@@ -1,0 +1,24 @@
+{
+  "senna": {
+    "url": "https://github.com/hustvl/Senna.git",
+    "commit": "31a3a2336e9494c254b612665fe55e95f67e9cae",
+    "files": {
+      "requirements.txt": "9c3ea935b811074e41ed61cb0b007625546a6412e0606fbf1199be53fd53fc8b",
+      "README.md": "0cd2ab22da3a1591db745da249c08de5e716ef071278e135ed69d88c58a11c94"
+    }
+  },
+  "vad": {
+    "url": "https://github.com/hustvl/VAD.git",
+    "commit": "1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8",
+    "files": {
+      "requirements.txt": "6e6af5223f6039fd7b402bce5cefe8f092a332f0c60b37cef2cd0260373ff6c9",
+      "docs/install.md": "e5d359244352d5acee0a6376faf8c77cc7834a996ba392a889b5966c668719ac",
+      "docs/train_eval.md": "acef8137228cca84069fdb4624701db56735a105382c688491a9d3eee9565c73"
+    }
+  },
+  "mmdetection3d": {
+    "url": "https://github.com/open-mmlab/mmdetection3d.git",
+    "commit": "f1107977dfd26155fc1f83779ee6535d2468f449",
+    "files": {}
+  }
+}
