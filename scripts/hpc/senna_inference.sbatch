@@ -5,6 +5,7 @@
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 : "${SLURM_JOB_ID:?Submit through sbatch}"
 cd "${SLURM_SUBMIT_DIR:?}"
 set -a

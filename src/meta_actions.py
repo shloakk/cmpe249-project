@@ -14,6 +14,18 @@ CAMERA_ORDER = (
     "CAM_BACK", "CAM_BACK_LEFT", "CAM_BACK_RIGHT",
 )
 
+# Match the released Senna data converter exactly. The label order looks
+# different from CAMERA_ORDER, but preserving the upstream prompt is required
+# because the checkpoint was trained and evaluated with this template.
+SENNA_IMAGE_PROMPT = (
+    "<FRONT VIEW>:\n<image>\n"
+    "<FRONT LEFT VIEW>:\n<image>\n"
+    "<FRONT RIGHT VIEW>:\n<image>\n"
+    "<BACK LEFT VIEW>:\n<image>\n"
+    "<BACK RIGHT VIEW>:\n<image>\n"
+    "<BACK VIEW>:\n<image>\n"
+)
+
 
 def _points(trajectory: Iterable[Sequence[float]]) -> list[tuple[float, float]]:
     result = [(float(point[0]), float(point[1])) for point in trajectory]
@@ -85,7 +97,8 @@ def navigation_command(command: object) -> str:
 
 def planning_prompt(current_speed: float, command: str) -> str:
     return (
-        f"Your current speed is {int(current_speed)} m/s, the navigation command "
+        SENNA_IMAGE_PROMPT
+        + f"Your current speed is {int(current_speed)} m/s, the navigation command "
         f"is '{command}', based on the understanding of the driving scene and "
         "the navigation information, what is your plan for the next three seconds? "
         "Please answer your SPEED plan and your PATH plan. SPEED includes KEEP, "

@@ -25,6 +25,19 @@ def completed_tokens(path: Path) -> set[str]:
     return tokens
 
 
+def validate_multiview_manifest(samples: list[dict]) -> None:
+    for index, sample in enumerate(samples):
+        images = sample.get("images")
+        question = sample.get("question")
+        image_count = len(images) if isinstance(images, list) else 0
+        token_count = question.count("<image>") if isinstance(question, str) else 0
+        if image_count != 6 or token_count != image_count:
+            raise ValueError(
+                f"manifest sample {index} must contain six camera paths and "
+                f"six image tokens; got paths={image_count} tokens={token_count}"
+            )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
@@ -42,6 +55,7 @@ def main() -> int:
     from llava.model.builder import load_senna_pretrained_model
 
     samples = json.loads(args.manifest.read_text())
+    validate_multiview_manifest(samples)
     if args.limit:
         samples = samples[: args.limit]
     done = completed_tokens(args.output)

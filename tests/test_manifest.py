@@ -37,6 +37,8 @@ class ManifestTests(unittest.TestCase):
             self.assertEqual(len(result[0]["images"]), 6)
             self.assertEqual(result[0]["gt_answer"], "KEEP, STRAIGHT")
             self.assertEqual(result[0]["navigation_command"], "go straight")
+            self.assertEqual(result[0]["question"].count("<image>"), 6)
+            self.assertTrue(result[0]["question"].startswith("<FRONT VIEW>:\n<image>\n"))
 
     def test_rejects_partial_future(self):
         with tempfile.TemporaryDirectory() as directory:
