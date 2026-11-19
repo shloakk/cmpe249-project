@@ -28,7 +28,8 @@ image="$EXPERIMENT_ROOT/environments/vad.sif"
 set -x
 "${HOST_PYTHON:-python3}" -m src.upstream --root "$EXPERIMENT_ROOT/upstream" --verify-only vad
 apptainer --version
-apptainer build --fakeroot "$image" containers/vad.def
+apptainer build --fakeroot --ignore-fakeroot-command \
+  "$image" containers/vad.def
 sha256sum "$image"
 env -u PYTHONPATH -u PYTHONHOME apptainer exec --nv \
     --bind "$repo:$repo" --bind "$EXPERIMENT_ROOT:$EXPERIMENT_ROOT" \
