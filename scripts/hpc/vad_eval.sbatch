@@ -17,6 +17,7 @@ vad_python="$EXPERIMENT_ROOT/environments/vad/bin/python"
 checkpoint="${VAD_CHECKPOINT:?Set VAD_CHECKPOINT to the released VAD Tiny stage-2 .pth}"
 config="${VAD_CONFIG:-$vad_root/projects/configs/VAD/VAD_tiny_stage_2.py}"
 result="$EXPERIMENT_ROOT/outputs/vad/$condition/$run_id"
+runtime="$result/runtime"
 mkdir -p "$result"
 [[ -x "$vad_python" && -f "$checkpoint" && -f "$config" ]]
 [[ ! -e "$result/predictions.pkl" && ! -e "$result/planning_metrics.json" ]] || {
@@ -26,6 +27,8 @@ mkdir -p "$result"
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONNOUSERSITE=1
 repo=$PWD
+bash "$repo/scripts/prepare_vad_runtime.sh" \
+  "$runtime" "$vad_root" "$EXPERIMENT_ROOT/vad_data"
 cp -p "$config" "$result/config.py"
 sha256sum "$config" "$checkpoint" > "$result/inputs.sha256"
 {
@@ -41,9 +44,9 @@ sha256sum "$config" "$checkpoint" > "$result/inputs.sha256"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv \
   > "$result/gpu.csv"
 (
-  cd "$vad_root"
-  env -u PYTHONPATH -u PYTHONHOME "$vad_python" \
-    tools/test.py "$config" "$checkpoint" \
+  cd "$runtime"
+  env -u PYTHONHOME PYTHONPATH="$runtime:$vad_root" "$vad_python" \
+    "$vad_root/tools/test.py" "$config" "$checkpoint" \
     --out "$result/predictions.pkl"
 )
 env -u PYTHONPATH -u PYTHONHOME "$vad_python" \

@@ -124,6 +124,9 @@ Each evaluation writes to `outputs/vad/<condition>/<job-id>/` by default, so
 reruns cannot replace earlier results. Set a unique `RUN_ID` before submission
 when a descriptive run name is preferred. Require a nonempty
 `outputs/vad/c0/<run-id>/planning_metrics.json` before training an adapter.
+Each run also creates an isolated runtime view that maps the released
+`./data/nuscenes/...` annotation paths to `$EXPERIMENT_ROOT/vad_data`; the
+pinned upstream checkout remains unchanged and concurrent runs do not share it.
 
 ## 6. Prepare C1-C3
 
