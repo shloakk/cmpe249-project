@@ -9,7 +9,9 @@ the writable view created by `scripts/prepare_vad_data.sh`:
 
 ```text
 $EXPERIMENT_ROOT/vad_data/
-├── maps -> $NUSCENES_DATA_ROOT/maps
+├── maps/
+│   ├── <shared map files> -> $NUSCENES_DATA_ROOT/maps/*
+│   └── expansion -> <nuScenes root>/extras/expansion
 ├── samples -> $NUSCENES_DATA_ROOT/samples
 ├── sweeps -> $NUSCENES_DATA_ROOT/sweeps
 ├── v1.0-trainval -> $NUSCENES_DATA_ROOT/v1.0-trainval
