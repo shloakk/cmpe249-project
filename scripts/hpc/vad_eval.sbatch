@@ -11,18 +11,43 @@ set -a
 source .env
 set +a
 condition="${CONDITION:-c0}"
+run_id="${RUN_ID:-$SLURM_JOB_ID}"
 vad_root="$EXPERIMENT_ROOT/upstream/vad"
-image="$EXPERIMENT_ROOT/environments/vad.sif"
+vad_python="$EXPERIMENT_ROOT/environments/vad/bin/python"
 checkpoint="${VAD_CHECKPOINT:?Set VAD_CHECKPOINT to the released VAD Tiny stage-2 .pth}"
 config="${VAD_CONFIG:-$vad_root/projects/configs/VAD/VAD_tiny_stage_2.py}"
-result="$EXPERIMENT_ROOT/outputs/vad/$condition"
+result="$EXPERIMENT_ROOT/outputs/vad/$condition/$run_id"
 mkdir -p "$result"
-[[ -f "$image" && -f "$checkpoint" && -f "$config" ]]
-bind="$PWD:$PWD,$NUSCENES_DATA_ROOT:$NUSCENES_DATA_ROOT,$NUSCENES_DERIVED_ROOT:$NUSCENES_DERIVED_ROOT,$EXPERIMENT_ROOT:$EXPERIMENT_ROOT"
-env -u PYTHONPATH -u PYTHONHOME apptainer exec --nv --bind "$bind" "$image" \
-  bash -lc "cd '$vad_root' && python3 tools/test.py '$config' '$checkpoint' \
-    --out '$result/predictions.pkl'"
-env -u PYTHONPATH -u PYTHONHOME apptainer exec --bind "$bind" "$image" \
-  python3 "$PWD/src/vad_metrics.py" --input "$result/predictions.pkl" \
+[[ -x "$vad_python" && -f "$checkpoint" && -f "$config" ]]
+[[ ! -e "$result/predictions.pkl" && ! -e "$result/planning_metrics.json" ]] || {
+  echo "Refusing to overwrite an existing VAD run: $result" >&2
+  exit 1
+}
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONNOUSERSITE=1
+repo=$PWD
+cp -p "$config" "$result/config.py"
+sha256sum "$config" "$checkpoint" > "$result/inputs.sha256"
+{
+  printf 'utc='; date -u +%FT%TZ
+  printf 'slurm_job_id=%s\n' "$SLURM_JOB_ID"
+  printf 'host='; hostname
+  printf 'repository_commit='; git rev-parse HEAD
+  printf 'vad_commit='; git -C "$vad_root" rev-parse HEAD
+  printf 'condition=%s\nrun_id=%s\n' "$condition" "$run_id"
+  printf 'checkpoint=%s\nconfig=%s\n' "$checkpoint" "$config"
+  printf 'cuda_visible_devices=%s\n' "${CUDA_VISIBLE_DEVICES:-UNSET}"
+} > "$result/run_metadata.txt"
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv \
+  > "$result/gpu.csv"
+(
+  cd "$vad_root"
+  env -u PYTHONPATH -u PYTHONHOME "$vad_python" \
+    tools/test.py "$config" "$checkpoint" \
+    --out "$result/predictions.pkl"
+)
+env -u PYTHONPATH -u PYTHONHOME "$vad_python" \
+  "$repo/src/vad_metrics.py" --input "$result/predictions.pkl" \
   --output "$result/planning_metrics.json"
-printf 'VAD_EVAL_OK condition=%s output=%s\n' "$condition" "$result"
+printf 'VAD_EVAL_OK condition=%s run=%s output=%s\n' \
+  "$condition" "$run_id" "$result"

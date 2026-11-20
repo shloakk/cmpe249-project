@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=vad-environment
+#SBATCH --job-name=vad-validation
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
@@ -7,7 +7,6 @@
 set -euo pipefail
 : "${SLURM_JOB_ID:?Submit through sbatch}"
 cd "${SLURM_SUBMIT_DIR:?}"
-repo=$PWD
 set -a
 source .env
 set +a
@@ -20,18 +19,15 @@ printf 'Commit: '; git rev-parse HEAD
 printf 'Dirty status:\n'; git status --short
 printf 'GPU assignment: %s\n' "${CUDA_VISIBLE_DEVICES:-UNSET}"
 nvidia-smi
-export APPTAINER_CACHEDIR="$EXPERIMENT_ROOT/caches/apptainer"
-export APPTAINER_TMPDIR="$EXPERIMENT_ROOT/tmp"
 export PYTHONDONTWRITEBYTECODE=1
-image="$EXPERIMENT_ROOT/environments/vad.sif"
-[[ ! -e "$image" ]] || { echo 'VAD image exists; inspect previous logs before rebuilding' >&2; exit 1; }
+export PYTHONNOUSERSITE=1
+vad_python="$EXPERIMENT_ROOT/environments/vad/bin/python"
+vad_root="$EXPERIMENT_ROOT/upstream/vad"
+[[ -x "$vad_python" ]] || {
+  echo "Missing VAD Python environment: $vad_python" >&2
+  exit 1
+}
 set -x
 "${HOST_PYTHON:-python3}" -m src.upstream --root "$EXPERIMENT_ROOT/upstream" --verify-only vad
-apptainer --version
-apptainer build --fakeroot --ignore-fakeroot-command \
-  "$image" containers/vad.def
-sha256sum "$image"
-env -u PYTHONPATH -u PYTHONHOME apptainer exec --nv \
-    --bind "$repo:$repo" --bind "$EXPERIMENT_ROOT:$EXPERIMENT_ROOT" \
-    "$image" python3 "$repo/scripts/environments/probe.py" \
-    vad --upstream "$EXPERIMENT_ROOT/upstream/vad"
+env -u PYTHONPATH -u PYTHONHOME "$vad_python" \
+  scripts/environments/probe.py vad --upstream "$vad_root"

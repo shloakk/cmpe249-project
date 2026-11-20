@@ -99,7 +99,7 @@ outputs/audit/val/speed_confusion.csv
 outputs/audit/val/path_confusion.csv
 ```
 
-## 5. Build the VAD runtime and evaluate C0
+## 5. Validate the VAD runtime and evaluate C0
 
 ```bash
 sbatch "${GPU_SBATCH[@]}" --parsable --chdir="$PWD" \
@@ -120,8 +120,10 @@ CONDITION=c0 sbatch "${GPU_SBATCH[@]}" --parsable --chdir="$PWD" \
   scripts/hpc/vad_eval.sbatch
 ```
 
-Require a nonempty `outputs/vad/c0/planning_metrics.json` before training an
-adapter.
+Each evaluation writes to `outputs/vad/<condition>/<job-id>/` by default, so
+reruns cannot replace earlier results. Set a unique `RUN_ID` before submission
+when a descriptive run name is preferred. Require a nonempty
+`outputs/vad/c0/<run-id>/planning_metrics.json` before training an adapter.
 
 ## 6. Prepare C1-C3
 
@@ -163,6 +165,7 @@ sbatch "${GPU_SBATCH[@]}" --parsable --chdir="$PWD" \
 
 Change `CONDITION` to `c2` or `c3` for the other runs. Record the Git commit,
 config, seed, checkpoint, elapsed time, memory, and allocated GPU for every run.
+Training outputs are isolated under `outputs/vad/<condition>/<run-id>/train`.
 
 ## 8. Evaluate with real Senna predictions
 

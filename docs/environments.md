@@ -18,13 +18,19 @@ installer validates Python and PyTorch versions before reusing it.
 
 ## VAD
 
-VAD is isolated in an Apptainer image because its released stack uses Python
-3.8, PyTorch 1.9.1 with CUDA 11.1, MMCV-full 1.4.0, MMDetection 2.14.0, and
-MMDetection3D 0.17.1.
+VAD uses a persistent Conda prefix with Python 3.8, PyTorch 1.9.1 with CUDA
+11.1, MMCV-full 1.4.0, MMDetection 2.14.0, and MMDetection3D 0.17.1. The legacy
+CUDA extensions are compiled in an unmodified CUDA 11.1 development image;
+the resulting environment runs directly under SLURM.
 
 ```bash
-sbatch scripts/hpc/setup_vad.sbatch
+srun --partition=cpuqs --account="$SLURM_ACCOUNT" --qos="$SLURM_QOS" \
+  --nodes=1 --ntasks=1 --cpus-per-task=4 --mem=16G --time=01:30:00 \
+  --chdir="$PWD" bash scripts/environments/setup_vad.sh
+
+sbatch scripts/hpc/setup_vad.sbatch  # one-GPU runtime validation
 ```
 
-The build uses `containers/vad.def`, stores caches under `EXPERIMENT_ROOT`, and
-validates actual MMCV CUDA operations before accepting the image.
+The installer stores packages, source checkouts, and caches under
+`EXPERIMENT_ROOT`. The validation job tests actual CUDA execution, MMCV ops,
+the VAD plugin, pinned package versions, and dependency consistency.

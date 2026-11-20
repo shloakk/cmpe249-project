@@ -21,15 +21,24 @@ def main() -> int:
     args = parser.parse_args()
     rows = []
     for condition in ("c0", "c1", "c2", "c3"):
-        path = args.root / condition / "planning_metrics.json"
-        if path.is_file():
+        condition_root = args.root / condition
+        paths = sorted(condition_root.glob("*/planning_metrics.json"))
+        legacy = condition_root / "planning_metrics.json"
+        if legacy.is_file():
+            paths.insert(0, legacy)
+        for path in paths:
             metrics = json.loads(path.read_text())
-            rows.append({"condition": condition, **{key: metrics.get(key) for key in KEYS}})
+            run_id = "legacy" if path == legacy else path.parent.name
+            rows.append({
+                "condition": condition,
+                "run_id": run_id,
+                **{key: metrics.get(key) for key in KEYS},
+            })
     if not rows:
         raise SystemExit(f"no planning_metrics.json files found below {args.root}")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=("condition", *KEYS))
+        writer = csv.DictWriter(handle, fieldnames=("condition", "run_id", *KEYS))
         writer.writeheader()
         writer.writerows(rows)
     print(args.output)

@@ -38,7 +38,7 @@ non-adapter parameters remain frozen.
 
 ```text
 configs/             Path templates, dependency constraints, upstream locks
-containers/          Reproducible VAD Apptainer definition
+containers/          Optional external-build VAD container definition
 integrations/vad/    Additive VAD detector/head integration
 scripts/hpc/         SLURM jobs for validation, inference, training, evaluation
 src/error_audit/     Prediction parsing and confusion analysis
