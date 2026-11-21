@@ -127,6 +127,9 @@ when a descriptive run name is preferred. Require a nonempty
 Each run also creates an isolated runtime view that maps the released
 `./data/nuscenes/...` annotation paths to `$EXPERIMENT_ROOT/vad_data`; the
 pinned upstream checkout remains unchanged and concurrent runs do not share it.
+The generated C0-C3 configs force the original BGR, unit-standard-deviation
+image normalization required by the released VAD checkpoint. Do not replace it
+with the newer ImageNet normalization unless training a matching checkpoint.
 
 ## 6. Prepare C1-C3
 

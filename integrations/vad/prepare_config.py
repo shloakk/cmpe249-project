@@ -8,6 +8,11 @@ import shutil
 import subprocess
 
 PINNED_VAD = "1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8"
+RELEASED_IMAGE_NORMALIZATION = (
+    "img_norm_cfg = dict(\n"
+    "    mean=[103.530, 116.280, 123.675],\n"
+    "    std=[1.0, 1.0, 1.0], to_rgb=False)\n"
+)
 
 
 def absolutize_base_paths(text: str, source: Path) -> str:
@@ -34,6 +39,26 @@ def absolutize_base_paths(text: str, source: Path) -> str:
     lines = text.splitlines(keepends=True)
     replacement = f"_base_ = {resolved!r}\n"
     lines[node.lineno - 1:node.end_lineno] = [replacement]
+    return "".join(lines)
+
+
+def set_released_image_normalization(text: str, source: Path) -> str:
+    """Use the preprocessing required by the released VAD checkpoint."""
+    tree = ast.parse(text, filename=str(source))
+    matches = []
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(isinstance(target, ast.Name) and target.id == "img_norm_cfg"
+               for target in node.targets):
+            matches.append(node)
+    if len(matches) != 1:
+        raise SystemExit(
+            f"expected exactly one img_norm_cfg assignment in {source}"
+        )
+    node = matches[0]
+    lines = text.splitlines(keepends=True)
+    lines[node.lineno - 1:node.end_lineno] = [RELEASED_IMAGE_NORMALIZATION]
     return "".join(lines)
 
 
@@ -71,6 +96,7 @@ def main() -> int:
 
     base = (root / args.base_config).resolve()
     text = absolutize_base_paths(base.read_text(), base)
+    text = set_released_image_normalization(text, base)
     data_root_line = "data_root = 'data/nuscenes/'"
     if text.count(data_root_line) != 1:
         raise SystemExit(f"expected exactly one {data_root_line!r} in {base}")

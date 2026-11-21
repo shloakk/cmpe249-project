@@ -7,6 +7,11 @@ from pathlib import Path
 import subprocess
 
 PINNED_VAD = "1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8"
+RELEASED_IMAGE_NORMALIZATION = (
+    "img_norm_cfg = dict(\n"
+    "    mean=[103.530, 116.280, 123.675],\n"
+    "    std=[1.0, 1.0, 1.0], to_rgb=False)\n"
+)
 
 
 def absolutize_base_paths(text: str, source: Path) -> str:
@@ -36,6 +41,26 @@ def absolutize_base_paths(text: str, source: Path) -> str:
     return "".join(lines)
 
 
+def set_released_image_normalization(text: str, source: Path) -> str:
+    """Use the preprocessing required by the released VAD checkpoint."""
+    tree = ast.parse(text, filename=str(source))
+    matches = []
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(isinstance(target, ast.Name) and target.id == "img_norm_cfg"
+               for target in node.targets):
+            matches.append(node)
+    if len(matches) != 1:
+        raise SystemExit(
+            f"expected exactly one img_norm_cfg assignment in {source}"
+        )
+    node = matches[0]
+    lines = text.splitlines(keepends=True)
+    lines[node.lineno - 1:node.end_lineno] = [RELEASED_IMAGE_NORMALIZATION]
+    return "".join(lines)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--vad-root", type=Path, required=True)
@@ -49,6 +74,7 @@ def main() -> int:
         raise SystemExit(f"expected VAD {PINNED_VAD}, found {revision}")
     source = args.vad_root / "projects/configs/VAD/VAD_tiny_stage_2.py"
     text = absolutize_base_paths(source.read_text(), source)
+    text = set_released_image_normalization(text, source)
     needle = "data_root = 'data/nuscenes/'"
     if text.count(needle) != 1:
         raise SystemExit(f"expected exactly one {needle!r}")
