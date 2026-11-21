@@ -172,6 +172,9 @@ sbatch "${GPU_SBATCH[@]}" --parsable --chdir="$PWD" \
 Change `CONDITION` to `c2` or `c3` for the other runs. Record the Git commit,
 config, seed, checkpoint, elapsed time, memory, and allocated GPU for every run.
 Training outputs are isolated under `outputs/vad/<condition>/<run-id>/train`.
+The launcher passes `--no-validate` because training configs contain train-only
+meta-action caches; all conditions are evaluated later in the same controlled
+real-Senna-prediction job.
 
 ## 8. Evaluate with real Senna predictions
 

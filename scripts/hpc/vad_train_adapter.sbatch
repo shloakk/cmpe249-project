@@ -49,6 +49,7 @@ nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv \
   cd "$runtime"
   env -u PYTHONHOME PYTHONPATH="$runtime:$vad_root" "$vad_python" \
     "$vad_root/tools/train.py" "$config" --work-dir "$work_dir" \
+    --no-validate \
     --cfg-options "load_from=$pretrained"
 )
 printf 'VAD_ADAPTER_TRAIN_OK condition=%s run=%s output=%s\n' \
